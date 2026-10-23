@@ -1,0 +1,43 @@
+
+services:
+  # Servicio 1: Base de datos MySQL (Monolito)
+  # MariaDB (igual a la base de datos de tu monolito)
+  mariadb:
+    image: mariadb:10.4.32
+    container_name: mariadb_local
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: oficina_agua
+    ports:
+      - "3306:3306"
+
+  # Servicio 2: Apache Kafka 4.x en modo KRaft (Sin ZooKeeper)
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka_local
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Configuración de dos listeners: Interno (Docker) y Externo (Host/Spring)
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka_ui_local
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      # Conecta a Kafka usando el canal interno de Docker
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
