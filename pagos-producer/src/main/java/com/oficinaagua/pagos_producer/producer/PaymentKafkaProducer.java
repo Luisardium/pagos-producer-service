@@ -10,6 +10,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ public class PaymentKafkaProducer {
 
     private final PaymentRepository paymentRepository;
     private final KafkaTemplate<String, PaymentEventMsg> kafkaTemplate;
+    private static final long SEND_TIMEOUT_SECONDS = 5;
 
     @Value("${kafka.topic.bank-payments}")
     private String bankTopic;
@@ -45,11 +49,22 @@ public class PaymentKafkaProducer {
                     .transactionDate(payment.getCreatedAt())
                     .build();
 
-            // Publica usando idempotencyKey como clave de particionamiento
-            kafkaTemplate.send(bankTopic, event.getPaymentId(), event);
-            log.info("Pago {} enviado a Kafka topic: {}", event.getPaymentId(), bankTopic);
+            try {
+                // Publica usando idempotencyKey como clave de particionamiento y espera la confirmación
+                kafkaTemplate.send(bankTopic, event.getPaymentId(), event)
+                        .get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Publicación interrumpida; se reintentará en el próximo ciclo");
+                return;
+            } catch (ExecutionException | TimeoutException e) {
+                log.error("No se pudo publicar el pago {}; se reintentará en el próximo ciclo",
+                        event.getPaymentId(), e);
+                continue;
+            }
 
-            // Marca como encolado para evitar publicaciones duplicadas
+            log.info("Pago {} enviado a Kafka topic: {}", event.getPaymentId(), bankTopic);
+            // Solo se marca como encolado si Kafka confirmó
             payment.setEnqueued(true);
             paymentRepository.save(payment);
         }
