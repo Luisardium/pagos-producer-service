@@ -6,6 +6,7 @@ import com.oficinaagua.pagos_producer.banco.model.BankPaymentRequest;
 import com.oficinaagua.pagos_producer.config.BankProperties;
 import com.oficinaagua.pagos_producer.config.CorrelationIdInterceptor;
 import com.oficinaagua.pagos_producer.domain.dto.PaymentEventMsg;
+import com.oficinaagua.pagos_producer.domain.entity.dynamo.PaymentDestination;
 import com.oficinaagua.pagos_producer.domain.entity.dynamo.PaymentLogStatus;
 import com.oficinaagua.pagos_producer.exception.NonRetryablePaymentException;
 import com.oficinaagua.pagos_producer.exception.RetryablePaymentException;
@@ -38,11 +39,11 @@ public class PaymentKafkaConsumer {
         try {
             processPayment(event);
         } catch (RetryablePaymentException e) {
-            paymentLogService.logFailure(event, PaymentLogStatus.RETRY,
+            paymentLogService.logFailure(PaymentDestination.BANK,event, PaymentLogStatus.RETRY,
                     e.getHttpStatus(), e.getErrorCode(), e.getMessage());
             throw e;
         } catch (NonRetryablePaymentException e) {
-            paymentLogService.logFailure(event, PaymentLogStatus.FAILED,
+            paymentLogService.logFailure(PaymentDestination.BANK,event, PaymentLogStatus.FAILED,
                     e.getHttpStatus(), e.getErrorCode(), e.getMessage());
             throw e;
         } finally {
@@ -63,8 +64,8 @@ public class PaymentKafkaConsumer {
                 throw new RetryablePaymentException("Respuesta vacía del banco para el pago " + key);
             }
 
-            statusService.markSent(key, receipt.getReceiptId());
-            paymentLogService.logSuccess(event, receipt.getReceiptId(), "Pago registrado en el banco");
+            statusService.markSentToBank(key, receipt.getReceiptId());
+            paymentLogService.logSuccess(PaymentDestination.BANK,event, receipt.getReceiptId(), "Pago registrado en el banco");
             log.info("Pago {} registrado en el banco. Comprobante {}", key, receipt.getReceiptId());
         } catch (FeignException e) {
             handleBankError(event, e);
@@ -76,8 +77,8 @@ public class PaymentKafkaConsumer {
         switch (errorClassifier.classify(e)) {
             case ALREADY_DELIVERED -> {
                 String receiptId = errorClassifier.originalReceiptId(e);
-                statusService.markSent(key, receiptId);
-                paymentLogService.logSuccess(event, receiptId,
+                statusService.markSentToBank(key, receiptId);
+                paymentLogService.logSuccess(PaymentDestination.BANK,event, receiptId,
                         "El banco ya tenía el pago (DUPLICATE_PAYMENT)");
                 log.info("Pago {} ya estaba en el banco, se marca como entregado", key);
             }

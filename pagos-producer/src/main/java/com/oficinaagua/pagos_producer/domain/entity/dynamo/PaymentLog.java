@@ -26,6 +26,7 @@ public class PaymentLog {
 
     @Getter(onMethod_ = @DynamoDbSecondaryPartitionKey(indexNames = STATUS_INDEX))
     private String status;              // SUCCESS, RETRY, FAILED, DEAD_LETTER
+    private String destination;         // BANK o ERP
 
     private Integer httpStatus;         // estado HTTP del banco (-1 = sin respuesta)
     private String errorCode;           // código del banco, ej: AMOUNT_LIMIT_EXCEEDED
