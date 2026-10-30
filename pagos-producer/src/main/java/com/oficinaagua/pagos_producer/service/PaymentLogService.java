@@ -1,6 +1,7 @@
 package com.oficinaagua.pagos_producer.service;
 
 import com.oficinaagua.pagos_producer.domain.dto.PaymentEventMsg;
+import com.oficinaagua.pagos_producer.domain.entity.dynamo.PaymentDestination;
 import com.oficinaagua.pagos_producer.domain.entity.dynamo.PaymentLog;
 import com.oficinaagua.pagos_producer.domain.entity.dynamo.PaymentLogStatus;
 import lombok.RequiredArgsConstructor;
@@ -24,26 +25,29 @@ public class PaymentLogService {
 
     private final DynamoDbTable<PaymentLog> table;
 
-    public void logSuccess(PaymentEventMsg event, String receiptId, String detail) {
-        PaymentLog entry = newEntry(event, PaymentLogStatus.SUCCESS);
+    public void logSuccess(PaymentDestination destination, PaymentEventMsg event,
+                           String receiptId, String detail) {
+        PaymentLog entry = newEntry(destination, event, PaymentLogStatus.SUCCESS);
         entry.setReceiptId(receiptId);
         entry.setReason(truncate(detail));
         save(entry);
     }
 
-    public void logFailure(PaymentEventMsg event, PaymentLogStatus status,
+    public void logFailure(PaymentDestination destination, PaymentEventMsg event, PaymentLogStatus status,
                            Integer httpStatus, String errorCode, String reason) {
-        PaymentLog entry = newEntry(event, status);
+        PaymentLog entry = newEntry(destination, event, status);
         entry.setHttpStatus(httpStatus);
         entry.setErrorCode(errorCode);
         entry.setReason(truncate(reason));
         save(entry);
     }
 
-    private PaymentLog newEntry(PaymentEventMsg event, PaymentLogStatus status) {
+    private PaymentLog newEntry(PaymentDestination destination, PaymentEventMsg event,
+                                PaymentLogStatus status) {
         PaymentLog entry = new PaymentLog();
         entry.setPaymentId(event.getPaymentId());
-        entry.setEventTime(EVENT_TIME.format(Instant.now()));
+        entry.setEventTime(EVENT_TIME.format(Instant.now()) + "#" + destination.name());
+        entry.setDestination(destination.name());
         entry.setStatus(status.name());
         entry.setAmountQuetzales(event.getAmountQuetzales());
         entry.setCustomerCode(event.getCustomerCode());

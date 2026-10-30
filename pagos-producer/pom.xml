@@ -194,6 +194,34 @@
 							</configOptions>
 						</configuration>
 					</execution>
+					<execution>
+						<id>generar-cliente-erp</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/openapi/erp-payments-api.yaml</inputSpec>
+							<generatorName>spring</generatorName>
+							<library>spring-cloud</library>
+							<apiPackage>com.oficinaagua.pagos_producer.erp.api</apiPackage>
+							<modelPackage>com.oficinaagua.pagos_producer.erp.model</modelPackage>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateModelDocumentation>false</generateModelDocumentation>
+							<configOptions>
+								<configPackage>com.oficinaagua.pagos_producer.erp.config</configPackage>
+								<useSpringBoot4>true</useSpringBoot4>
+								<useJackson3>true</useJackson3>
+								<useTags>true</useTags>
+								<skipDefaultInterface>true</skipDefaultInterface>
+								<openApiNullable>false</openApiNullable>
+								<documentationProvider>none</documentationProvider>
+								<annotationLibrary>none</annotationLibrary>
+								<hideGenerationTimestamp>true</hideGenerationTimestamp>
+							</configOptions>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

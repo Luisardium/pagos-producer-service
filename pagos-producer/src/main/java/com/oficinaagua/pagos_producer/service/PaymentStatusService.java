@@ -1,6 +1,5 @@
 package com.oficinaagua.pagos_producer.service;
 
-import com.oficinaagua.pagos_producer.domain.entity.mysql.PaymentEntity;
 import com.oficinaagua.pagos_producer.exception.NonRetryablePaymentException;
 import com.oficinaagua.pagos_producer.repository.mysql.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +13,18 @@ public class PaymentStatusService {
     private final PaymentRepository repository;
 
     @Transactional
-    public void markSent(String idempotencyKey, String receiptId) {
-        PaymentEntity payment = repository.findByIdempotencyKey(idempotencyKey)
-                .orElseThrow(() -> new NonRetryablePaymentException(
-                        "El pago " + idempotencyKey + " no existe en la BD"));
+    public void markSentToBank(String idempotencyKey, String receiptId) {
+        requireUpdated(repository.markSentToBank(idempotencyKey, receiptId), idempotencyKey);
+    }
 
-        payment.setSentToBank(true);
-        payment.setBankReceiptId(receiptId);
+    @Transactional
+    public void markSentToErp(String idempotencyKey, String receiptId) {
+        requireUpdated(repository.markSentToErp(idempotencyKey, receiptId), idempotencyKey);
+    }
+
+    private void requireUpdated(int rowsUpdated, String idempotencyKey) {
+        if (rowsUpdated == 0) {
+            throw new NonRetryablePaymentException("El pago " + idempotencyKey + " no existe en la BD");
+        }
     }
 }

@@ -48,4 +48,10 @@ public class PaymentEntity {
 
     @Column(name = "bank_receipt_id")
     private String bankReceiptId;
+
+    @Column(name = "sent_to_erp", nullable = false)
+    private Boolean sentToErp;
+
+    @Column(name = "erp_receipt_id")
+    private String erpReceiptId;
 }

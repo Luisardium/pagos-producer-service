@@ -8,12 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class BankErrorClassifier {
 
-    public enum Outcome {
-        ALREADY_DELIVERED,  // el banco ya tiene el pago: se trata como éxito
-        TRANSIENT,          // fallo temporal: se reintenta
-        REJECTED            // error definitivo: va directo a dead-letter
-    }
-
     private static final int NO_RESPONSE = -1;   // Feign usa -1 en timeouts y errores de conexión
     private static final int CONFLICT = 409;
     private static final int TOO_MANY_REQUESTS = 429;
@@ -22,17 +16,17 @@ public class BankErrorClassifier {
 
     private final ObjectMapper json = new ObjectMapper();
 
-    public Outcome classify(FeignException e) {
+    public DeliveryOutcome classify(FeignException e) {
         int status = e.status();
 
         if (status == CONFLICT
                 && CODE_DUPLICATE_PAYMENT.equals(readBody(e).path("code").asText())) {
-            return Outcome.ALREADY_DELIVERED;
+            return DeliveryOutcome.ALREADY_DELIVERED;
         }
         if (status == NO_RESPONSE || status == TOO_MANY_REQUESTS || status >= SERVER_ERROR) {
-            return Outcome.TRANSIENT;
+            return DeliveryOutcome.TRANSIENT;
         }
-        return Outcome.REJECTED;
+        return DeliveryOutcome.REJECTED;
     }
 
     public String originalReceiptId(FeignException e) {
