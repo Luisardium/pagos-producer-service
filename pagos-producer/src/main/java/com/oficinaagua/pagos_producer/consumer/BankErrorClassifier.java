@@ -38,6 +38,18 @@ public class BankErrorClassifier {
     public String originalReceiptId(FeignException e) {
         return readBody(e).path("originalReceipt").path("receiptId").asText(null);
     }
+    public String errorCode(FeignException e) {
+        String code = readBody(e).path("code").asText(null);
+        if (code == null && e.status() == NO_RESPONSE) {
+            return "NO_RESPONSE";
+        }
+        return code;
+    }
+
+    public String errorMessage(FeignException e) {
+        String message = readBody(e).path("message").asText(null);
+        return message != null ? message : e.getMessage();
+    }
 
     private JsonNode readBody(FeignException e) {
         try {
