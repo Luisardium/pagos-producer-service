@@ -6,13 +6,15 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+/* TODO MODIFICAR LOS NOMBRES DE LAS COLUMNAS PARA QUE SEAN IGUALES A LOS DE LA BD DEL MONOLITO, Y AGREGAR CAMPOS
+ AL MONOLITO SI ES NECESARIO */
+
 @Entity
 @Table(name = "pagos")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-/* TODO MODIFICAR LOS NOMBRES DE LAS COLUMNAS PARA QUE SEAN IGUALES A LOS DE LA BD DEL MONOLITO, Y AGREGAR CAMPOS
- AL MONOLITO SI ES NECESARIO */
+
 public class PaymentEntity {
 
     @Id
@@ -43,4 +45,7 @@ public class PaymentEntity {
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Column(name = "bank_receipt_id")
+    private String bankReceiptId;
 }
