@@ -1,0 +1,7 @@
+{
+  "teamCode": "EQUIPO_B",
+  "payer": { "customerCode": "CLI-0001", "fullName": "Ana Lopez", "taxId": "CF" },
+  "amount": { "valueInCents": 15075, "currency": "GTQ" },
+  "transactionDate": "2026-10-29T10:00:00Z",
+  "channel": "CASH"
+}
